@@ -1,0 +1,6 @@
+@Cricbuzz_Backend_HostAddress = http://localhost:5171
+
+GET {{Cricbuzz_Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -44,9 +44,15 @@ namespace Cricbuzz_Backend.Pages
                     }
                 }
 
+                int wicket = ball.Wickets.Count;
+                int total = ball.Runs.Total;
+
+                ball = InitializeBall();
+
                 ball.IsSecondInning = true;
-                ball.FirstInniingWickets = ball.Wickets.Count;
-                ball.FirstInningScore = ball.Runs.Total;
+                ball.FirstInniingWickets = wicket;
+                ball.FirstInningScore = total;
+
             }
         }
 

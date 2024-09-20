@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Cricbuzz-Backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+63f8c164020f9ca9efb661472923e10f4f10f75b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ed3144731ce15a9575216e2bac140b47e67cae3e")]
 [assembly: System.Reflection.AssemblyProductAttribute("Cricbuzz-Backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Cricbuzz-Backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

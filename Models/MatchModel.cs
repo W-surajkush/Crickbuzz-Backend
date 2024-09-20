@@ -57,7 +57,7 @@
         public List<string> Dates { get; set; }
         public Event Event { get; set; }
         public string Gender { get; set; }
-        public string MatchType { get; set; }
+        public string Match_type { get; set; }
         public int MatchTypeNumber { get; set; }
         public Officials Officials { get; set; }
         public Outcome Outcome { get; set; }

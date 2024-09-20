@@ -33,3 +33,4 @@ C:\Users\SurajKumar.Kushwaha\source\repos\Cricbuzz-Backend\obj\Debug\net8.0\refi
 C:\Users\SurajKumar.Kushwaha\source\repos\Cricbuzz-Backend\obj\Debug\net8.0\Cricbuzz-Backend.pdb
 C:\Users\SurajKumar.Kushwaha\source\repos\Cricbuzz-Backend\obj\Debug\net8.0\Cricbuzz-Backend.genruntimeconfig.cache
 C:\Users\SurajKumar.Kushwaha\source\repos\Cricbuzz-Backend\obj\Debug\net8.0\ref\Cricbuzz-Backend.dll
+C:\Users\SurajKumar.Kushwaha\source\repos\Cricbuzz-Backend\obj\Debug\net8.0\Cricbuzz-Backend.sourcelink.json

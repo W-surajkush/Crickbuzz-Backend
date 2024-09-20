@@ -11,87 +11,108 @@ namespace Cricbuzz_Backend.Pages
         private readonly ILogger<SendMatchData> _logger;
         private readonly IHubContext<MatchHub, IMatchClient> _context;
 
-        private int _counter = 0;
-
         public SendMatchData(ILogger<SendMatchData> logger, IHubContext<MatchHub, IMatchClient> context)
         {
             _logger = logger;
             _context = context;
         }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            string mfile = File.ReadAllText("JsonData/IndvsPak.json");
-            MatchModel matchData = JsonConvert.DeserializeObject<MatchModel>(mfile);
-            var ball = new BallByBallModel();
-            ball.Runs = new Runs();
-            ball.Wickets = new List<Wicket> { new Wicket() };
-            ball.Delivery = new Delivery();
-            ball.Runs.Extras = 0;
-            ball.Runs.Total = 0;
-            ball.Runs.Batter = 0;
-            ball.Delivery.Batter = "";
-            ball.Delivery.Non_striker = "";
-            ball.Delivery.Bowler = "";
+            string matchFileContent = await File.ReadAllTextAsync("JsonData/IndvsPak.json");
+            MatchModel matchData = JsonConvert.DeserializeObject<MatchModel>(matchFileContent);
 
-            if (matchData != null)
+            if (matchData == null)
             {
-                ball.Runs.Extras = 0;
-                ball.Runs.Total = 0;
-                ball.Runs.Batter = 0;
-                ball.Delivery.Batter = "";
-                ball.Delivery.Non_striker = "";
-                ball.Status = "Success";
-
-                await _context.Clients.All.ReceiveMatchInfo(matchData.Info);
-                await _context.Clients.All.ReceiveLiveData(ball);
-
-                foreach (var inning in matchData.Innings)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(new Random().Next(5, 10)));
-                    ball.Team = inning.Team;
-                    ball.Runs = new Runs();
-                    ball.Wickets = new List<Wicket> { new Wicket() };
-                    ball.Over = new Over2();
-                    ball.Over.OverNumber = 0;
-                    ball.Over.BallNumber = 0;
-                    foreach (var over in inning.Overs)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(new Random().Next(2, 5)));
-                        foreach (var delivery in over.Deliveries)
-                        {
-                            await Task.Delay(TimeSpan.FromSeconds(new Random().Next(2, 5)));
-                            ball.Delivery = delivery;
-                            ball.Runs.Extras += delivery.Runs.Extras;
-                            ball.Runs.Batter += delivery.Runs.Batter;
-                            ball.Runs.Total += delivery.Runs.Total;
-                            if (delivery.Wickets != null)
-                            {
-                                foreach (var wickets in delivery.Wickets)
-                                    ball.Wickets.Add(wickets);
-                            }
-                            if (delivery.Runs.Extras == 0 || (delivery.Runs.Extras > 0 && delivery.Extras?.LegByes != null))
-                            {
-                                ball.Over.BallNumber += 1;
-                            }
-                            if (ball.Over.BallNumber == 6)
-                            {
-                                ball.Over.OverNumber += 1;
-                                ball.Over.BallNumber = 0;
-                            }
-                            await _context.Clients.All.ReceiveLiveData(ball);
-                        }
-
-                    }
-
-                    ball.IsSecondInning = true;
-                    ball.FirstInniingWickets = ball.Wickets.Count;
-                    ball.FirstInningScore = ball.Runs.Total;
-
-                }
+                await SendErrorMessage();
+                return;
             }
-            ball.Status = "Failed to get data";
-            await _context.Clients.All.ReceiveLiveData(ball);
 
+            BallByBallModel ball = InitializeBall();
+
+            foreach (var inning in matchData.Innings)
+            {
+                await BroadcastInitialData(ball);
+                ball.Team = inning.Team;
+
+                foreach (var over in inning.Overs)
+                {
+                    foreach (var delivery in over.Deliveries)
+                    {
+                        await ProcessDelivery(ball, delivery);
+                        await BroadcastLiveData(ball, matchData.Info);
+                    }
+                }
+
+                int wicket = ball.Wickets.Count;
+                int total = ball.Runs.Total;
+
+                ball = InitializeBall();
+
+                ball.IsSecondInning = true;
+                ball.FirstInniingWickets = wicket;
+                ball.FirstInningScore = total;
+
+            }
+        }
+
+        private async Task ProcessDelivery(BallByBallModel ball, Delivery delivery)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(new Random().Next(2, 5)));
+
+            ball.Delivery = delivery;
+            ball.Runs.Extras += delivery.Runs.Extras;
+            ball.Runs.Batter += delivery.Runs.Batter;
+            ball.Runs.Total += delivery.Runs.Total;
+
+            if (delivery.Wickets != null)
+            {
+                ball.Wickets.AddRange(delivery.Wickets);
+            }
+
+            // Increment ball number if valid
+            if (delivery.Runs.Extras == 0 || delivery.Extras?.LegByes != null)
+            {
+                ball.Over.BallNumber += 1;
+            }
+
+            // Update over and reset ball number after 6 deliveries
+            if (ball.Over.BallNumber == 6)
+            {
+                ball.Over.OverNumber += 1;
+                ball.Over.BallNumber = 0;
+            }
+        }
+
+        private async Task BroadcastLiveData(BallByBallModel ball, Info matchInfo)
+        {
+            await _context.Clients.All.ReceiveLiveData(ball);
+            await _context.Clients.All.ReceiveMatchInfo(matchInfo);
+        }
+
+        private async Task BroadcastInitialData(BallByBallModel ball)
+        {
+            await _context.Clients.All.ReceiveLiveData(ball);
+            await Task.Delay(TimeSpan.FromSeconds(new Random().Next(5, 10)));
+        }
+
+        private BallByBallModel InitializeBall()
+        {
+            return new BallByBallModel
+            {
+                Runs = new Runs(),
+                Wickets = new List<Wicket>(),
+                Delivery = new Delivery(),
+                Status = "Success",
+                IsSecondInning = false,
+                Over = new Over2()
+            };
+        }
+
+        private async Task SendErrorMessage()
+        {
+            var ball = new BallByBallModel { Status = "Failed to get data" };
+            await _context.Clients.All.ReceiveLiveData(ball);
         }
     }
 }
